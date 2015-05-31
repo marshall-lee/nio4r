@@ -20,6 +20,43 @@ module NIO
       @closed = false
     end
 
+    def register(io, interests)
+      if self.closed?
+        fail TypeError, "monitor is already closed"
+      else
+        unless io.is_a?(IO)
+          if IO.respond_to? :try_convert
+            io = IO.try_convert(io)
+          elsif io.respond_to? :to_io
+            io = io.to_io
+          end
+
+          fail TypeError, "can't convert #{io.class} into IO" unless io.is_a? IO
+        end
+
+        @io, @interests = io, interests
+      end
+    end
+
+    # set the interests set
+    def interests=(interests)
+      if self.closed?
+        fail TypeError, "monitor is already closed" if self.closed?
+      else
+        @interests = interests
+      end
+    end
+
+    # set the IO object
+    def io=(io)
+      register io,interests
+    end
+
+    # return the IO object attached to the monitor
+    def getAttach()
+      return io
+    end
+
     # Is the IO object readable?
     def readable?
       readiness == :r || readiness == :rw
@@ -29,6 +66,7 @@ module NIO
     def writable?
       readiness == :w || readiness == :rw
     end
+
     alias_method :writeable?, :writable?
 
     # Is this monitor closed?

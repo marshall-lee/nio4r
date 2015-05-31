@@ -353,6 +353,14 @@ public class Nio4r implements Library {
             key.attach(this);
         }
 
+        @JRubyMethod(name = "interests=")
+        public IRubyObject setInterests(IRubyObject interests){
+
+            this.interests = interests;
+            return this.interests;
+
+        }
+
         @JRubyMethod
         public IRubyObject io(ThreadContext context) {
             return io;
