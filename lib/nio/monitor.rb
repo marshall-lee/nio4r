@@ -51,12 +51,12 @@ module NIO
 
     # set the IO object
     def io=(io)
-      register io,interests
+      register io, interests
     end
 
     # return the IO object attached to the monitor
-    def getAttach()
-      return io
+    def attached
+      @io
     end
 
     # Is the IO object readable?
