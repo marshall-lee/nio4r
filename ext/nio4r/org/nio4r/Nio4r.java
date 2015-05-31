@@ -354,11 +354,13 @@ public class Nio4r implements Library {
         }
 
         @JRubyMethod(name = "interests=")
-        public IRubyObject setInterests(IRubyObject interests){
-
-            this.interests = interests;
-            return this.interests;
-
+        public IRubyObject setInterests(ThreadContext context, IRubyObject interests){
+            if(this.isClosed(context).equals(context.getRuntime().getFalse())){
+                this.interests = interests;
+                return this.interests;
+            }else{
+                throw context.getRuntime().newTypeError("monitor is already closed");
+            }
         }
 
         @JRubyMethod
