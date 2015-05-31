@@ -57,13 +57,6 @@ RSpec.describe NIO::Monitor do
     expect(reader_monitor).not_to be_writable
   end
 
-  it "changes the interest set" do
-    #check for changing the interests on the go
-    expect(subject.interests).not_to eq(:rw)
-    subject.interests= (:rw)
-    expect(subject.interests).to eq(:rw)
-  end
-
   it "closes" do
     expect(subject).not_to be_closed
     expect(selector.registered?(reader)).to be_truthy
@@ -83,10 +76,10 @@ RSpec.describe NIO::Monitor do
 
   it "changes the interest set after monitor closed" do
     # check for changing the interests on the go after closed expected to fail
-    expect(subject.interests).not_to eq(:r)
+    expect(subject.interests).not_to eq(:rw)
     subject.close # forced shutdown
-    subject.interests= (:r)
-    expect(subject.interests).to eq(:r)
+    subject.interests= (:rw)
+    expect(subject.interests).to eq(:rw)
   end
 
 end
