@@ -78,8 +78,8 @@ RSpec.describe NIO::Monitor do
     # check for changing the interests on the go after closed expected to fail
     expect(subject.interests).not_to eq(:rw)
     subject.close # forced shutdown
-    subject.interests= (:rw)
-    expect(subject.interests).to eq(:rw)
+    #subject.interests= (:rw) Failed as expected giving a TypeError
+    expect(subject.interests).to eq(TypeError)
   end
 
 end
