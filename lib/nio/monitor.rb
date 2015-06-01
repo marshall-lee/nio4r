@@ -36,7 +36,8 @@ module NIO
           fail TypeError, "can't convert #{io.class} into IO" unless io.is_a? IO
         end
 
-        @io, @interests = io, interests
+        @io        = io
+        @interests = interests
       end
     end
 
