@@ -25,6 +25,12 @@ RSpec.describe NIO::Monitor do
     expect(subject.io).to eq(reader)
   end
 
+  it "changes the io" do
+    # Changes the IO object on the go
+    expect(subject.io).not_to eq(writer)
+    expect(subject.register(writer, :rw)).to eq(writer)
+  end
+
   it "knows its selector" do
     expect(subject.selector).to eq(selector)
   end
@@ -74,10 +80,17 @@ RSpec.describe NIO::Monitor do
     expect(subject).to be_closed
   end
 
-  it "changes the interest set after monitor closed" do
-    # check for changing the interests on the go after closed expected to fail
+  it "try changing the interest set after monitor closed and get an error" do
+    # check for changing the interests on the go after closed expected to return a typeError
     expect(subject.interests).not_to eq(:rw)
     subject.close # forced shutdown
     expect { subject.interests = :rw }.to raise_error(TypeError)
+  end
+
+  it "try changing the io set after monitor closed and get an error" do
+    # expected to return a TypeError after trying to change the IO after monitor is closed
+    expect(subject.io).not_to eq(writer)
+    subject.close # forced shutdown
+    expect { subject.register(writer, :rw) }.to raise_error(TypeError)
   end
 end

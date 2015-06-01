@@ -125,9 +125,43 @@ static VALUE NIO_Monitor_initialize(VALUE self, VALUE io, VALUE interests, VALUE
     return Qnil;
 }
 
-//Still under construction
 static VALUE NIO_Monitor_register(VALUE self, VALUE io, VALUE interests){
-    return Qnil;
+    if(NIO_Monitor_is_closed(self) == Qfalse){
+        struct NIO_Monitor *monitor;
+        struct NIO_Selector *selector;
+        ID interests_id;
+
+        #if HAVE_RB_IO_T
+            rb_io_t *fptr;
+        #else
+            OpenFile *fptr;
+        #endif
+
+        interests_id = SYM2ID(interests);
+
+        Data_Get_Struct(self, struct NIO_Monitor, monitor);
+
+        if(interests_id == rb_intern("r")) {
+            monitor->interests = EV_READ;
+        } else if(interests_id == rb_intern("w")) {
+            monitor->interests = EV_WRITE;
+        } else if(interests_id == rb_intern("rw")) {
+            monitor->interests = EV_READ | EV_WRITE;
+        } else {
+            rb_raise(rb_eArgError, "invalid event type %s (must be :r, :w, or :rw)",
+                RSTRING_PTR(rb_funcall(interests, rb_intern("inspect"), 0, 0)));
+        }
+
+        GetOpenFile(rb_convert_type(io, T_FILE, "IO", "to_io"), fptr);
+    //    ev_io_init(&monitor->ev_io, NIO_Selector_monitor_callback, FPTR_TO_FD(fptr), monitor->interests);
+
+        rb_ivar_set(self, rb_intern("io"), io);
+        rb_ivar_set(self, rb_intern("interests"), interests);
+    }
+    else{
+       rb_raise(rb_eTypeError, "Monitor is already closed");//Raise the TypeError if Monitor is closed.
+    }
+    return rb_ivar_get(self, rb_intern("io"));
 }
 
 static VALUE NIO_Monitor_setInterests(VALUE self, VALUE interests){

@@ -36,8 +36,8 @@ module NIO
           fail TypeError, "can't convert #{io.class} into IO" unless io.is_a? IO
         end
 
-        @io        = io
         @interests = interests
+        @io        = io
       end
     end
 
@@ -53,10 +53,6 @@ module NIO
     # set the IO object
     def io=(io)
       register io, interests
-    end
-
-    # return the IO object attached to the monitor
-    def attached
       @io
     end
 
