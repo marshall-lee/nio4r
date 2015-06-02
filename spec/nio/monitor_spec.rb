@@ -80,5 +80,4 @@ RSpec.describe NIO::Monitor do
     subject.close # forced shutdown
     expect { subject.interests = :rw }.to raise_error(TypeError)
   end
-
 end
