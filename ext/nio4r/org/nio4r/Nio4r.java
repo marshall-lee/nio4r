@@ -363,17 +363,6 @@ public class Nio4r implements Library {
             }
         }
 
-        @JRubyMethod(name = "register")
-        public IRubyObject register(ThreadContext context,IRubyObject selectable, IRubyObject interests){
-            if(this.isClosed(context).equals(context.getRuntime().getFalse())){
-                this.io        = RubyIO.convertToIO(context, selectable);
-                this.interests = interests;
-                return this.io;
-            }else{
-                throw context.getRuntime().newTypeError("monitor is already closed");
-            }
-        }
-
         @JRubyMethod
         public IRubyObject io(ThreadContext context) {
             return io;

@@ -22,25 +22,6 @@ module NIO
       @closed    = false
     end
 
-    def register(io, interests)
-      if self.closed?
-        fail TypeError, "monitor is already closed"
-      else
-        unless io.is_a?(IO)
-          if IO.respond_to? :try_convert
-            io = IO.try_convert(io)
-          elsif io.respond_to? :to_io
-            io = io.to_io
-          end
-
-          fail TypeError, "can't convert #{io.class} into IO" unless io.is_a? IO
-        end
-
-        @interests = interests
-        @io        = io
-      end
-    end
-
     # set the interests set
     def interests=(interests)
       if self.closed?
@@ -48,12 +29,6 @@ module NIO
       else
         @interests = interests
       end
-    end
-
-    # set the IO object
-    def io=(io)
-      register io, interests
-      @io
     end
 
     # Is the IO object readable?
