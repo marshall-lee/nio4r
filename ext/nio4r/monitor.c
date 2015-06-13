@@ -123,6 +123,7 @@ static VALUE NIO_Monitor_setInterests(VALUE self, VALUE interests){
     //Check Whether the Monitor is already Closed?
     if(NIO_Monitor_is_closed(self) == Qfalse){
         struct NIO_Monitor *monitor;
+
         ID interests_id;
 
         interests_id = SYM2ID(interests);
@@ -138,8 +139,10 @@ static VALUE NIO_Monitor_setInterests(VALUE self, VALUE interests){
             rb_raise(rb_eArgError, "invalid event type %s (must be :r, :w, or :rw)",
                 RSTRING_PTR(rb_funcall(interests, rb_intern("inspect"), 0, 0)));
         }
-
+        //Stop the watcher and restart it after set the variable.
+        ev_io_stop(monitor->selector->ev_loop, &monitor->ev_io);
         rb_ivar_set(self, rb_intern("interests"), interests);
+        ev_io_start(monitor->selector->ev_loop, &monitor->ev_io);
     }
     else{
        rb_raise(rb_eTypeError, "Monitor is already closed");//Raise the TypeError if Monitor is closed.
