@@ -133,21 +133,25 @@ static VALUE NIO_Monitor_register(VALUE self, VALUE io, VALUE interests){
 static VALUE NIO_Monitor_setInterests(VALUE self, VALUE interests){
     //Check Whether the Monitor is already Closed?
     if(NIO_Monitor_is_closed(self) == Qfalse){
-        struct NIO_Monitor *monitor;
+       struct NIO_Monitor *monitor;
         ID interests_id;
+
+        //Since these are not declared in the C version with CRuby 2.0.0
+        int stdout = 1;
+        int stdin = 0;
 
         interests_id = SYM2ID(interests);
         Data_Get_Struct(self, struct NIO_Monitor, monitor);
         int mask = 0;
         if(interests_id == rb_intern("r")) {
             monitor->interests = EV_READ;
-            mask = STDIN_FILENO;
+            mask = stdin;
         } else if(interests_id == rb_intern("w")) {
             monitor->interests = EV_WRITE;
-            mask = STDOUT_FILENO;
+            mask = stdout;
         } else if(interests_id == rb_intern("rw")) {
-            monitor->interests = EV_READ | EV_WRITE;
-            mask = STDIN_FILENO|STDOUT_FILENO;
+            monitor->interests = stdin | stdout;
+            mask = stdin | stdout;
         } else {
             rb_raise(rb_eArgError, "invalid event type %s (must be :r, :w, or :rw)",
                 RSTRING_PTR(rb_funcall(interests, rb_intern("inspect"), 0, 0)));
