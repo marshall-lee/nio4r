@@ -41,7 +41,9 @@ void Init_NIO_Monitor()
     rb_define_alloc_func(cNIO_Monitor, NIO_Monitor_allocate);
 
     rb_define_method(cNIO_Monitor, "initialize", NIO_Monitor_initialize, 3);
+    /*Define two methods added by Me*/
     rb_define_method(cNIO_Monitor, "interests=", NIO_Monitor_setInterests, 1);
+
     rb_define_method(cNIO_Monitor, "close", NIO_Monitor_close, -1);
     rb_define_method(cNIO_Monitor, "closed?", NIO_Monitor_is_closed, 0);
     rb_define_method(cNIO_Monitor, "io", NIO_Monitor_io, 0);
@@ -123,29 +125,39 @@ static VALUE NIO_Monitor_setInterests(VALUE self, VALUE interests){
     //Check Whether the Monitor is already Closed?
     if(NIO_Monitor_is_closed(self) == Qfalse){
         struct NIO_Monitor *monitor;
-
         ID interests_id;
+
+        //Since these are not declared in the C version with CRuby 2.0.0
+        int stdout = 1;
+        int stdin = 0;
 
         interests_id = SYM2ID(interests);
         Data_Get_Struct(self, struct NIO_Monitor, monitor);
-
+        int mask = 0;
         if(interests_id == rb_intern("r")) {
             monitor->interests = EV_READ;
+            mask = stdin;
         } else if(interests_id == rb_intern("w")) {
             monitor->interests = EV_WRITE;
+            mask = stdout;
         } else if(interests_id == rb_intern("rw")) {
-            monitor->interests = EV_READ | EV_WRITE;
+            monitor->interests = stdin | stdout;
+            mask = stdin | stdout;
         } else {
             rb_raise(rb_eArgError, "invalid event type %s (must be :r, :w, or :rw)",
                 RSTRING_PTR(rb_funcall(interests, rb_intern("inspect"), 0, 0)));
         }
-        //Stop the watcher and restart it after set the variable.
-        ev_io_stop(monitor->selector->ev_loop, &monitor->ev_io);
         rb_ivar_set(self, rb_intern("interests"), interests);
+        //Changing the values in monitor struct
+        ev_io_stop(monitor->selector->ev_loop, &monitor->ev_io);
+        //Acknowledging the libev about the change
+        ev_io_set(&monitor->ev_io, mask, monitor->interests);
+        //Starting the monitor again
         ev_io_start(monitor->selector->ev_loop, &monitor->ev_io);
     }
     else{
        rb_raise(rb_eTypeError, "Monitor is already closed");//Raise the TypeError if Monitor is closed.
+
     }
     return rb_ivar_get(self, rb_intern("interests")); //
 }
