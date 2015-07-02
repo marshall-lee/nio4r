@@ -59,9 +59,12 @@ RSpec.describe NIO::Monitor do
 
   it "Changes the interest_set on the go" do
     # Only works in CRuby for some reason.
-    # As I identified it might be because of the differences between two implementations (JRuby and CRuby)
-    # In Jruby we cannot even use the (:W) to register a ReaderMonitor(selector.register(reader, :r)) because of "IllegalArgumentException"
-    # coming from Java. But in CRuby implementation there is no such exception rising from the C backend.
+    # As I identified it might be because of the differences between
+    # two implementations (JRuby and CRuby)
+    # In Jruby we cannot even use the (:W) to register a ReaderMonitor
+    # (selector.register(reader, :r)) because of "IllegalArgumentException"
+    # coming from Java.
+    # But in CRuby implementation there is no such exception rising from the C backend.
     reader_monitor = subject
 
     selected = selector.select(0)
