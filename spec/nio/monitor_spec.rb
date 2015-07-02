@@ -16,9 +16,9 @@ RSpec.describe NIO::Monitor do
   end
 
   it "changes the interest set" do
-    expect(subject.interests).not_to eq(:rw)
-    subject.interests = :rw
-    expect(subject.interests).to eq(:rw)
+    expect(peer.interests).not_to eq(:w)
+    peer.interests = :w
+    expect(peer.interests).to eq(:w)
   end
 
   it "knows its IO object" do
@@ -57,6 +57,22 @@ RSpec.describe NIO::Monitor do
     expect(reader_monitor).not_to be_writable
   end
 
+  it "Changes the interest_set on the go" do
+    # Only works in CRuby for some reason.
+    # As I identified it might be because of the differences between two implementations (JRuby and CRuby)
+    # In Jruby we cannot even use the (:W) to register a ReaderMonitor(selector.register(reader, :r)) because of "IllegalArgumentException"
+    # coming from Java. But in CRuby implementation there is no such exception rising from the C backend.
+    reader_monitor = subject
+
+    selected = selector.select(0)
+    expect(selected).to eq(nil)
+
+    reader_monitor.interests = :w
+    selected = selector.select(0)
+    expect(selected).not_to eq(nil)
+    expect(selected).to include(reader_monitor)
+  end
+
   it "closes" do
     expect(subject).not_to be_closed
     expect(selector.registered?(reader)).to be_truthy
@@ -74,8 +90,8 @@ RSpec.describe NIO::Monitor do
     expect(subject).to be_closed
   end
 
-  it "try changing the interest set after monitor closed and get an error" do
-    # check for changing the interests on the go after closed expected to return a typeError
+  it "changes the interest set after monitor closed" do
+    # check for changing the interests on the go after closed expected to fail
     expect(subject.interests).not_to eq(:rw)
     subject.close # forced shutdown
     expect { subject.interests = :rw }.to raise_error(TypeError)
