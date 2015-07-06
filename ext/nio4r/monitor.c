@@ -15,7 +15,9 @@ static void NIO_Monitor_free(struct NIO_Monitor *monitor);
 
 /* Methods */
 static VALUE NIO_Monitor_initialize(VALUE self, VALUE selector, VALUE io, VALUE interests);
+/*2 Methods Added by Me*/
 static VALUE NIO_Monitor_setInterests(VALUE self, VALUE interests);
+
 static VALUE NIO_Monitor_close(int argc, VALUE *argv, VALUE self);
 static VALUE NIO_Monitor_is_closed(VALUE self);
 static VALUE NIO_Monitor_io(VALUE self);
@@ -41,9 +43,7 @@ void Init_NIO_Monitor()
     rb_define_alloc_func(cNIO_Monitor, NIO_Monitor_allocate);
 
     rb_define_method(cNIO_Monitor, "initialize", NIO_Monitor_initialize, 3);
-    /*Define two methods added by Me*/
     rb_define_method(cNIO_Monitor, "interests=", NIO_Monitor_setInterests, 1);
-
     rb_define_method(cNIO_Monitor, "close", NIO_Monitor_close, -1);
     rb_define_method(cNIO_Monitor, "closed?", NIO_Monitor_is_closed, 0);
     rb_define_method(cNIO_Monitor, "io", NIO_Monitor_io, 0);
@@ -118,6 +118,11 @@ static VALUE NIO_Monitor_initialize(VALUE self, VALUE io, VALUE interests, VALUE
 
     ev_io_start(selector->ev_loop, &monitor->ev_io);
 
+    return Qnil;
+}
+
+//Still under construction
+static VALUE NIO_Monitor_register(VALUE self, VALUE io, VALUE interests){
     return Qnil;
 }
 
