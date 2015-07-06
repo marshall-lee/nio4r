@@ -127,22 +127,16 @@ static VALUE NIO_Monitor_setInterests(VALUE self, VALUE interests){
         struct NIO_Monitor *monitor;
         ID interests_id;
 
-        //Since these are not declared in the C version with CRuby 2.0.0
-        int stdout = 1;
-        int stdin = 0;
-
         interests_id = SYM2ID(interests);
         Data_Get_Struct(self, struct NIO_Monitor, monitor);
-        int mask = 0;
+
         if(interests_id == rb_intern("r")) {
             monitor->interests = EV_READ;
-            mask = stdin;
         } else if(interests_id == rb_intern("w")) {
             monitor->interests = EV_WRITE;
-            mask = stdout;
         } else if(interests_id == rb_intern("rw")) {
-            monitor->interests = stdin | stdout;
-            mask = stdin | stdout;
+            monitor->interests = EV_READ | EV_WRITE;
+
         } else {
             rb_raise(rb_eArgError, "invalid event type %s (must be :r, :w, or :rw)",
                 RSTRING_PTR(rb_funcall(interests, rb_intern("inspect"), 0, 0)));
@@ -151,7 +145,7 @@ static VALUE NIO_Monitor_setInterests(VALUE self, VALUE interests){
         //Changing the values in monitor struct
         ev_io_stop(monitor->selector->ev_loop, &monitor->ev_io);
         //Acknowledging the libev about the change
-        ev_io_set(&monitor->ev_io, mask, monitor->interests);
+        ev_io_set(&monitor->ev_io, &monitor->ev_io.fd, monitor->interests);
         //Starting the monitor again
         ev_io_start(monitor->selector->ev_loop, &monitor->ev_io);
     }
