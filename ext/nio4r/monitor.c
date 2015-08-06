@@ -150,7 +150,10 @@ static VALUE NIO_Monitor_setInterests(VALUE self, VALUE interests){
         //Changing the values in monitor struct
         ev_io_stop(monitor->selector->ev_loop, &monitor->ev_io);
         //Acknowledging the libev about the change
-        ev_io_set(&monitor->ev_io, &monitor->ev_io.fd, monitor->interests);
+
+        int fd = &monitor->ev_io.fd; //file descriptor
+
+        ev_io_set(&monitor->ev_io, fd, monitor->interests);
         //Starting the monitor again
         ev_io_start(monitor->selector->ev_loop, &monitor->ev_io);
     }
