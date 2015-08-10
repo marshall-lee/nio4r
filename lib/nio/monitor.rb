@@ -1,7 +1,7 @@
 module NIO
   # Monitors watch IO objects for specific events
   class Monitor
-    attr_reader :io, :interests, :selector
+    attr_reader :io, :interests, :selector, :closed
     attr_accessor :value, :readiness
 
     # :nodoc
@@ -45,7 +45,8 @@ module NIO
 
     # Is this monitor closed?
     def closed?
-      @closed
+      temp = @closed
+      temp
     end
 
     # Deactivate this monitor
