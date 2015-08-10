@@ -45,6 +45,22 @@ public class Nio4r implements Library {
         }, nio);
 
         monitor.defineAnnotatedMethods(Monitor.class);
+
+		RubyClass fileWatcher = ruby.defineClassUnder("FileWatcher", ruby.getObject(), new ObjectAllocator() {
+            public IRubyObject allocate(Ruby ruby, RubyClass rc) {
+                return new FileWatcher(ruby, rc);
+            }
+        }, nio);
+
+        fileWatcher.defineAnnotatedMethods(FileWatcher.class);
+
+		RubyClass fileEvent = ruby.defineClassUnder("FileEvent", ruby.getObject(), new ObjectAllocator() {
+            public IRubyObject allocate(Ruby ruby, RubyClass rc) {
+                return new FileEvent(ruby, rc);
+            }
+        }, nio);
+
+        fileEvent.defineAnnotatedMethods(FileEvent.class);
     }
 
     public static int symbolToInterestOps(Ruby ruby, SelectableChannel channel, IRubyObject interest) {
@@ -462,5 +478,107 @@ public class Nio4r implements Library {
         public IRubyObject isClosed(ThreadContext context) {
             return this.closed;
         }
+    }
+
+    public class FileWatcher extends RubyObject {
+		WatchService watcher = FileSystems.getDefault().newWatchService();
+		Selector selector = null;
+		ArrayList<FileEvent> fileEventList = null;
+		ThreadContext context = null;
+		IRubyObject path = null;
+		IRubyObject event = null;
+
+
+      // Path lockFile = Paths.get(lockFilePath);
+      //  Path lockFileDir = lockFile.getParent();
+
+		public FileWatcher(final Ruby ruby, RubyClass rubyClass) {
+            super(ruby, rubyClass);
+        }
+
+		@JRubyMethod
+        public IRubyObject initialize(ThreadContext context, IRubyObject path, IRubyObject selector) {
+            this.io        = RubyIO.convertToIO(context, selectable);
+            this.selector  = selector;
+			this.path = path;
+			this.context = context;
+
+            this.value  = context.nil;
+            this.closed = context.getRuntime().getFalse();
+			this.fileEventList = new ArrayList<FileEvent>();
+
+			File dir = new File(path.convertToString().asJavaString());
+			watchDirectory(dir.toPath());
+
+            return context.nil;
+        }
+
+		public void watchDirectoryPath(Path path) {
+		    try {
+		        Boolean isFolder = (Boolean) Files.getAttribute(path,
+		                "basic:isDirectory", NOFOLLOW_LINKS);
+		        if (!isFolder) {
+		            throw new IllegalArgumentException("Path: " + path
+		                    + " is not a folder");
+		        }
+		    } catch (IOException ioe) {
+		        ioe.printStackTrace();
+		    }
+
+		    FileSystem fs = path.getFileSystem();
+		    try (WatchService service = fs.newWatchService()) {
+		        path.register(service, ENTRY_CREATE, ENTRY_MODIFY, ENTRY_DELETE);
+
+		        WatchKey key = null;
+		        while (true) {
+		            key = service.take();
+		            Kind<?> kind = null;
+		            for (WatchEvent<?> watchEvent : key.pollEvents()) {
+		                kind = watchEvent.kind();
+		                if (OVERFLOW == kind) {
+		                    continue; // loop
+		                } else if (ENTRY_CREATE == kind) {
+							fileEventList.add(new FileEvent(context, ruby.newSymbol("CREATE")));
+		                } else if (ENTRY_MODIFY == kind) {
+							fileEventList.add(new FileEvent(context, ruby.newSymbol("MODIFY")));
+		                } else if (ENTRY_DELETE == kind) {
+							fileEventList.add(new FileEvent(context, ruby.newSymbol("DELETE")));
+		                }
+		            }
+
+		            if (!key.reset()) {
+		                break;
+		            }
+		        }
+
+		    } catch (IOException ioe) {
+		        ioe.printStackTrace();
+		    } catch (InterruptedException ie) {
+		        ie.printStackTrace();
+		    }
+
+	    }
+		private void setEvent(ThreadContext context, IRubyObject event){
+			this.event = event;
+		}
+	}
+
+    public class FileEvent extends RubyObject {
+
+    	IRubyObject fileEvent = null;
+
+    	public FileEvent(final Ruby ruby, RubyClass rubyClass) {
+            super(ruby, rubyClass);
+        }
+
+    	@JRubyMethod
+        public IRubyObject initialize(ThreadContext context, IRubyObject fileEvent) {
+    		this.fileEvent = fileEvent;
+    	}
+
+    	@JRubyMethod
+        public IRubyObject getFileEvent(ThreadContext context) {
+    		return fileEvent;
+    	}
     }
 }
